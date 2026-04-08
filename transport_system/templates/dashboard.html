@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}لوحة التحكم — نظام النقل{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">
+            <i class="bi bi-speedometer2"></i>
+            لوحة التحكم
+        </h1>
+        <p class="page-subtitle">نظرة عامة على البطولة الوطنية لكرة السلة بكلميم</p>
+    </div>
+</div>
+
+<!-- بطاقات الإحصائيات -->
+<div class="stats-grid">
+    <div class="stat-card stat-card-primary">
+        <div class="stat-card-body">
+            <div class="stat-icon">
+                <i class="bi bi-building"></i>
+            </div>
+            <div class="stat-info">
+                <h3 class="stat-number" id="statAcademies">{{ academies_count }}</h3>
+                <p class="stat-label">الأكاديميات</p>
+            </div>
+        </div>
+        <div class="stat-card-footer">
+            <a href="/academies"><i class="bi bi-arrow-left"></i> إدارة الأكاديميات</a>
+        </div>
+    </div>
+
+    <div class="stat-card stat-card-success">
+        <div class="stat-card-body">
+            <div class="stat-icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="stat-info">
+                <h3 class="stat-number" id="statTeams">{{ teams_total }}</h3>
+                <p class="stat-label">إجمالي الفرق</p>
+            </div>
+        </div>
+        <div class="stat-card-footer">
+            <span>نشط يوم 1: <strong>{{ teams_active_d1 }}</strong> | نشط يوم 2: <strong>{{ teams_active_d2 }}</strong></span>
+        </div>
+    </div>
+
+    <div class="stat-card stat-card-warning">
+        <div class="stat-card-body">
+            <div class="stat-icon">
+                <i class="bi bi-bus-front-fill"></i>
+            </div>
+            <div class="stat-info">
+                <h3 class="stat-number" id="statVehicles">{{ vehicles_count }}</h3>
+                <p class="stat-label">وسائل النقل</p>
+            </div>
+        </div>
+        <div class="stat-card-footer">
+            <span>عامة: <strong>{{ vehicles_public }}</strong> | خاصة: <strong>{{ vehicles_private }}</strong></span>
+        </div>
+    </div>
+
+    <div class="stat-card stat-card-info">
+        <div class="stat-card-body">
+            <div class="stat-icon">
+                <i class="bi bi-signpost-split-fill"></i>
+            </div>
+            <div class="stat-info">
+                <h3 class="stat-number">{{ trips_d1 + trips_d2 }}</h3>
+                <p class="stat-label">إجمالي الرحلات</p>
+            </div>
+        </div>
+        <div class="stat-card-footer">
+            <span>يوم 1: <strong>{{ trips_d1 }}</strong> | يوم 2: <strong>{{ trips_d2 }}</strong></span>
+        </div>
+    </div>
+</div>
+
+<!-- أزرار الوصول السريع -->
+<div class="section-title">
+    <h2><i class="bi bi-lightning-charge-fill"></i> وصول سريع</h2>
+</div>
+
+<div class="quick-actions">
+    <a href="/academies" class="quick-action-card" id="quickAcademies">
+        <div class="qa-icon qa-icon-blue">
+            <i class="bi bi-plus-circle"></i>
+        </div>
+        <h4>إضافة أكاديمية</h4>
+        <p>إضافة أكاديمية جديدة للبطولة</p>
+    </a>
+
+    <a href="/vehicles" class="quick-action-card" id="quickVehicles">
+        <div class="qa-icon qa-icon-amber">
+            <i class="bi bi-bus-front"></i>
+        </div>
+        <h4>إدارة العربات</h4>
+        <p>إضافة وتعديل وسائل النقل</p>
+    </a>
+
+    <a href="/distribution" class="quick-action-card" id="quickDistribution">
+        <div class="qa-icon qa-icon-green">
+            <i class="bi bi-diagram-3"></i>
+        </div>
+        <h4>توزيع النقل</h4>
+        <p>توليد خطة النقل تلقائياً</p>
+    </a>
+
+    <a href="/teams_status" class="quick-action-card" id="quickTeams">
+        <div class="qa-icon qa-icon-purple">
+            <i class="bi bi-people"></i>
+        </div>
+        <h4>حالة الفرق</h4>
+        <p>تبديل حالة الفرق (نشط/مقصى)</p>
+    </a>
+
+    <a href="/reports" class="quick-action-card" id="quickReports">
+        <div class="qa-icon qa-icon-red">
+            <i class="bi bi-file-earmark-pdf"></i>
+        </div>
+        <h4>التقارير</h4>
+        <p>تصدير التقارير PDF / Excel</p>
+    </a>
+</div>
+{% endblock %}

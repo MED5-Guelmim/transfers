@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}إدارة وسائل النقل — نظام النقل{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">
+            <i class="bi bi-bus-front"></i>
+            إدارة وسائل النقل
+        </h1>
+        <p class="page-subtitle">إضافة وتعديل وحذف العربات المتاحة للبطولة</p>
+    </div>
+    <button class="btn btn-gold" data-bs-toggle="modal" data-bs-target="#vehicleModal" onclick="resetVehicleForm()" id="btnAddVehicle">
+        <i class="bi bi-plus-lg"></i> إضافة عربة
+    </button>
+</div>
+
+<!-- جدول وسائل النقل -->
+<div class="content-card">
+    <div class="table-responsive">
+        <table class="table table-modern" id="vehiclesTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>اسم العربة</th>
+                    <th>النوع</th>
+                    <th>السعة</th>
+                    <th>الملكية</th>
+                    <th>الأكاديمية</th>
+                    <th>ذهاب وإياب</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="vehiclesTableBody">
+                {% for vehicle in vehicles %}
+                <tr id="vehicle-row-{{ vehicle.id }}">
+                    <td>{{ loop.index }}</td>
+                    <td><i class="bi bi-bus-front"></i> {{ vehicle.name }}</td>
+                    <td>
+                        <span class="badge {% if vehicle.type == 'large' %}bg-primary{% else %}bg-secondary{% endif %}">
+                            {{ vehicle.type_label }}
+                        </span>
+                    </td>
+                    <td>{{ vehicle.capacity }} فرق</td>
+                    <td>
+                        <span class="badge {% if vehicle.ownership == 'public' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                            {{ vehicle.ownership_label }}
+                        </span>
+                    </td>
+                    <td>{{ vehicle.academy.name if vehicle.academy else '—' }}</td>
+                    <td>
+                        {% if vehicle.can_return %}
+                        <i class="bi bi-check-circle text-success"></i>
+                        {% else %}
+                        <i class="bi bi-x-circle text-danger"></i>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-outline-warning" onclick="editVehicle({{ vehicle.id }}, '{{ vehicle.name }}', '{{ vehicle.type }}', '{{ vehicle.ownership }}', {{ vehicle.academy_id or 'null' }}, {{ 'true' if vehicle.can_return else 'false' }})" title="تعديل">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteVehicle({{ vehicle.id }}, '{{ vehicle.name }}')" title="حذف">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not vehicles %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-5">
+                        <i class="bi bi-bus-front" style="font-size: 3rem;"></i>
+                        <p class="mt-2">لا توجد عربات حالياً.</p>
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: إضافة/تعديل عربة -->
+<div class="modal fade" id="vehicleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-custom">
+            <div class="modal-header">
+                <h5 class="modal-title" id="vehicleModalLabel">
+                    <i class="bi bi-bus-front"></i> إضافة عربة
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="vehicleId" value="">
+                <div class="mb-3">
+                    <label for="vehicleName" class="form-label">اسم / رقم العربة</label>
+                    <input type="text" class="form-control" id="vehicleName" placeholder="مثال: حافلة 1">
+                </div>
+                <div class="mb-3">
+                    <label for="vehicleType" class="form-label">النوع</label>
+                    <select class="form-select" id="vehicleType">
+                        <option value="small">صغيرة (فريقان كحد أقصى)</option>
+                        <option value="large">كبيرة (4 فرق كحد أقصى)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="vehicleOwnership" class="form-label">الملكية</label>
+                    <select class="form-select" id="vehicleOwnership" onchange="toggleAcademySelect()">
+                        <option value="public">عامة (متاحة للجميع)</option>
+                        <option value="academy">خاصة بأكاديمية</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="academySelectGroup" style="display: none;">
+                    <label for="vehicleAcademy" class="form-label">الأكاديمية</label>
+                    <select class="form-select" id="vehicleAcademy">
+                        <option value="">اختر الأكاديمية...</option>
+                        {% for academy in academies %}
+                        <option value="{{ academy.id }}">{{ academy.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="vehicleCanReturn" checked>
+                        <label class="form-check-label" for="vehicleCanReturn">يمكنها الذهاب والإياب</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-gold" onclick="saveVehicle()">
+                    <i class="bi bi-check-lg"></i> حفظ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let editingVehicleId = null;
+
+    function toggleAcademySelect() {
+        const ownership = document.getElementById('vehicleOwnership').value;
+        document.getElementById('academySelectGroup').style.display =
+            ownership === 'academy' ? 'block' : 'none';
+    }
+
+    function resetVehicleForm() {
+        editingVehicleId = null;
+        document.getElementById('vehicleId').value = '';
+        document.getElementById('vehicleName').value = '';
+        document.getElementById('vehicleType').value = 'small';
+        document.getElementById('vehicleOwnership').value = 'public';
+        document.getElementById('vehicleAcademy').value = '';
+        document.getElementById('vehicleCanReturn').checked = true;
+        document.getElementById('vehicleModalLabel').innerHTML = '<i class="bi bi-bus-front"></i> إضافة عربة';
+        toggleAcademySelect();
+    }
+
+    function editVehicle(id, name, type, ownership, academyId, canReturn) {
+        editingVehicleId = id;
+        document.getElementById('vehicleId').value = id;
+        document.getElementById('vehicleName').value = name;
+        document.getElementById('vehicleType').value = type;
+        document.getElementById('vehicleOwnership').value = ownership;
+        document.getElementById('vehicleAcademy').value = academyId || '';
+        document.getElementById('vehicleCanReturn').checked = canReturn;
+        document.getElementById('vehicleModalLabel').innerHTML = '<i class="bi bi-pencil"></i> تعديل عربة';
+        toggleAcademySelect();
+        new bootstrap.Modal(document.getElementById('vehicleModal')).show();
+    }
+
+    async function saveVehicle() {
+        const name = document.getElementById('vehicleName').value.trim();
+        const type = document.getElementById('vehicleType').value;
+        const ownership = document.getElementById('vehicleOwnership').value;
+        const academyId = document.getElementById('vehicleAcademy').value;
+        const canReturn = document.getElementById('vehicleCanReturn').checked;
+
+        if (!name) {
+            showToast('اسم العربة مطلوب', 'error');
+            return;
+        }
+
+        if (ownership === 'academy' && !academyId) {
+            showToast('يجب اختيار الأكاديمية', 'error');
+            return;
+        }
+
+        const url = editingVehicleId ? `/api/vehicles/${editingVehicleId}` : '/api/vehicles';
+        const method = editingVehicleId ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name, type, ownership,
+                    academy_id: ownership === 'academy' ? parseInt(academyId) : null,
+                    can_return: canReturn
+                })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                showToast(data.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('vehicleModal')).hide();
+                setTimeout(() => location.reload(), 500);
+            } else {
+                showToast(data.error, 'error');
+            }
+        } catch (err) {
+            showToast('حدث خطأ', 'error');
+        }
+    }
+
+    async function deleteVehicle(id, name) {
+        if (!confirm(`هل أنت متأكد من حذف العربة "${name}"؟`)) return;
+        try {
+            const response = await fetch(`/api/vehicles/${id}`, { method: 'DELETE' });
+            const data = await response.json();
+            if (response.ok) {
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                showToast(data.error, 'error');
+            }
+        } catch (err) {
+            showToast('حدث خطأ', 'error');
+        }
+    }
+</script>
+{% endblock %}
