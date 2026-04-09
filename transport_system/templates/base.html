@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="نظام إدارة النقل اللوجستي - البطولة الوطنية لكرة السلة بكلميم">
+    <title>{% block title %}نظام النقل اللوجستي{% endblock %}</title>
+
+    <!-- Bootstrap 5 RTL -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- الشريط الجانبي -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <i class="bi bi-trophy-fill"></i>
+            </div>
+            <h2 class="brand-title">نظام النقل</h2>
+            <p class="brand-subtitle">البطولة الوطنية بكلميم</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/" class="nav-link-item {% if request.path == '/' %}active{% endif %}" id="nav-dashboard">
+                <i class="bi bi-speedometer2"></i>
+                <span>لوحة التحكم</span>
+            </a>
+            <a href="/academies" class="nav-link-item {% if '/academies' in request.path or '/academy' in request.path %}active{% endif %}" id="nav-academies">
+                <i class="bi bi-building"></i>
+                <span>الأكاديميات</span>
+            </a>
+            <a href="/hotels" class="nav-link-item {% if '/hotels' in request.path %}active{% endif %}" id="nav-hotels">
+                <i class="bi bi-building-fill"></i>
+                <span>الفنادق</span>
+            </a>
+            <a href="/matches" class="nav-link-item {% if '/matches' in request.path %}active{% endif %}" id="nav-matches">
+                <i class="bi bi-trophy"></i>
+                <span>المباريات</span>
+            </a>
+            <a href="/vehicles" class="nav-link-item {% if '/vehicles' in request.path %}active{% endif %}" id="nav-vehicles">
+                <i class="bi bi-bus-front"></i>
+                <span>وسائل النقل</span>
+            </a>
+            <a href="/teams_status" class="nav-link-item {% if '/teams_status' in request.path %}active{% endif %}" id="nav-teams">
+                <i class="bi bi-people"></i>
+                <span>إدارة الفرق</span>
+            </a>
+            <a href="/distribution" class="nav-link-item {% if '/distribution' in request.path %}active{% endif %}" id="nav-distribution">
+                <i class="bi bi-diagram-3"></i>
+                <span>توزيع النقل</span>
+            </a>
+            <a href="/reports" class="nav-link-item {% if '/reports' in request.path %}active{% endif %}" id="nav-reports">
+                <i class="bi bi-file-earmark-pdf"></i>
+                <span>التقارير</span>
+            </a>
+
+            {% if current_user.is_authenticated and current_user.is_admin %}
+            <div class="nav-separator"></div>
+            <a href="/users" class="nav-link-item {% if '/users' in request.path %}active{% endif %}" id="nav-users">
+                <i class="bi bi-people-fill"></i>
+                <span>إدارة المستخدمين</span>
+            </a>
+            {% endif %}
+        </nav>
+
+        <div class="sidebar-footer">
+            {% if current_user.is_authenticated %}
+            <div class="sidebar-user-info">
+                <div class="user-avatar">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <div class="user-details">
+                    <span class="user-display-name">{{ current_user.display_name }}</span>
+                    <span class="user-role-badge {{ 'role-admin' if current_user.is_admin else 'role-user' }}">
+                        {{ current_user.role_label }}
+                    </span>
+                </div>
+            </div>
+            <div class="sidebar-user-actions">
+                <button class="btn-change-password" onclick="openChangePasswordModal()" title="تغيير كلمة المرور">
+                    <i class="bi bi-key-fill"></i>
+                    <span>تغيير كلمة المرور</span>
+                </button>
+                <a href="{{ url_for('auth.logout') }}" class="btn-logout" title="تسجيل الخروج">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>خروج</span>
+                </a>
+            </div>
+            {% endif %}
+            <div class="footer-badge">
+                <i class="bi bi-basketball"></i>
+                <span>كرة السلة بكلميم 2026</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- مودال تغيير كلمة المرور (متاح في كل الصفحات) -->
+    {% if current_user.is_authenticated %}
+    <div class="modal fade" id="globalChangePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content modal-custom">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-key-fill" style="color: var(--accent-dark); margin-left: 8px;"></i>
+                        تغيير كلمة المرور
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">كلمة المرور الحالية</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="globalCurrentPassword" placeholder="أدخل كلمة المرور الحالية">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">كلمة المرور الجديدة</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                            <input type="password" class="form-control" id="globalNewPassword" placeholder="4 أحرف على الأقل">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">تأكيد كلمة المرور الجديدة</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                            <input type="password" class="form-control" id="globalConfirmPassword" placeholder="أعد إدخال كلمة المرور الجديدة">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-gold btn-sm" onclick="globalChangePassword()">
+                        <i class="bi bi-check-lg"></i> تغيير
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- زر فتح القائمة للهاتف -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="main-content" id="mainContent">
+        <!-- إشعارات Toast -->
+        <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer" style="z-index: 9999;"></div>
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- الخلفية المعتمة للهاتف -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
