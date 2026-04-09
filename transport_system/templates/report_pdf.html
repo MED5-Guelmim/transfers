@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report.title }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+
+        @font-face {
+            font-family: 'Tahoma';
+            src: url('file:///{{ font_regular }}');
+        }
+
+        @font-face {
+            font-family: 'TahomaBold';
+            src: url('file:///{{ font_bold }}');
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tahoma', sans-serif;
+            direction: rtl;
+            color: #333333;
+            padding: 10px;
+            font-size: 11px;
+        }
+
+        .report-title {
+            text-align: center;
+            background-color: #e91e63;
+            color: white;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .report-title h1 {
+            font-family: 'TahomaBold', sans-serif;
+            font-size: 16px;
+            margin-bottom: 3px;
+        }
+
+        .report-title p {
+            font-size: 12px;
+            color: #fce4ec;
+        }
+
+        .academy-section-title {
+            background-color: #880e4f;
+            color: white;
+            padding: 10px 15px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-family: 'TahomaBold', sans-serif;
+            font-size: 14px;
+        }
+
+        .academy-section-title span {
+            font-family: 'Tahoma', sans-serif;
+            font-size: 10px;
+            color: #f8bbd0;
+        }
+
+        .vehicle-section {
+            margin-bottom: 15px;
+            border: 1px solid #f48fb1;
+        }
+
+        .vehicle-header {
+            background-color: #fce4ec;
+            color: #880e4f;
+            padding: 8px 12px;
+            font-family: 'TahomaBold', sans-serif;
+            font-size: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: #c2185b;
+            color: white;
+            padding: 6px 10px;
+            text-align: right;
+            font-size: 10px;
+            font-family: 'TahomaBold', sans-serif;
+            border: 1px solid #ad1457;
+        }
+
+        td {
+            padding: 6px 10px;
+            border: 1px solid #f8bbd0;
+            text-align: right;
+            font-size: 10px;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #fce4ec;
+        }
+
+        .direction-go {
+            color: #2e7d32;
+            font-family: 'TahomaBold', sans-serif;
+        }
+
+        .direction-return {
+            color: #1565c0;
+            font-family: 'TahomaBold', sans-serif;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 2px solid #e91e63;
+            color: #888888;
+            font-size: 9px;
+        }
+
+        .separator {
+            border: none;
+            border-top: 2px dashed #f48fb1;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <pdf:language name="arabic"/>
+
+    <div class="report-title">
+        <h1>{{ report.title }}</h1>
+        <p>{{ report.day_label }}</p>
+    </div>
+
+    {% if report.academy_sections %}
+        {# تقرير جميع الأكاديميات - كل واحدة منفصلة #}
+        {% for section in report.academy_sections %}
+        <div class="academy-section-title">
+            {{ section.academy_name }}
+            <span> — {{ section.academy_hotel }}</span>
+        </div>
+
+        {% for v_data in section.vehicles_data %}
+        <div class="vehicle-section">
+            <div class="vehicle-header">
+                العربة: {{ v_data.vehicle.name }}
+                ({{ v_data.vehicle.type_label }})
+                {% if v_data.day %} — اليوم {{ v_data.day }}{% endif %}
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>الرحلة</th>
+                        <th>الاتجاه</th>
+                        <th>الفريق</th>
+                        <th>الفئة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trip in v_data.trips %}
+                    {% for team in trip.teams %}
+                    <tr>
+                        <td>{{ trip.trip_order }}</td>
+                        <td class="direction-{{ trip.direction }}">{{ trip.direction_label }}</td>
+                        <td>{{ team.gender }}</td>
+                        <td>{{ team.category_label }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+
+        {% if not loop.last %}
+        <hr class="separator"/>
+        {% endif %}
+        {% endfor %}
+
+    {% else %}
+        {# تقرير عام أو أكاديمية واحدة #}
+        {% for v_data in report.vehicles_data %}
+        <div class="vehicle-section">
+            <div class="vehicle-header">
+                العربة: {{ v_data.vehicle.name }}
+                ({{ v_data.vehicle.type_label }})
+                {% if v_data.day %} — اليوم {{ v_data.day }}{% endif %}
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>الرحلة</th>
+                        <th>الاتجاه</th>
+                        <th>الأكاديمية</th>
+                        <th>الفريق</th>
+                        <th>الفئة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trip in v_data.trips %}
+                    {% for team in trip.teams %}
+                    <tr>
+                        <td>{{ trip.trip_order }}</td>
+                        <td class="direction-{{ trip.direction }}">{{ trip.direction_label }}</td>
+                        <td>{{ team.academy_name }}</td>
+                        <td>{{ team.gender }}</td>
+                        <td>{{ team.category_label }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if not report.vehicles_data %}
+    <div style="text-align: center; padding: 40px; color: #999999;">
+        <p>لا توجد بيانات للتقرير المحدد</p>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p>البطولة الوطنية لكرة السلة بكلميم — نظام إدارة النقل اللوجستي</p>
+    </div>
+</body>
+</html>
