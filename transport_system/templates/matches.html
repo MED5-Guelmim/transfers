@@ -1,0 +1,489 @@
+{% extends "base.html" %}
+{% block title %}إدارة المباريات — نظام النقل{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-content">
+        <h1 class="page-title">
+            <i class="bi bi-trophy-fill"></i>
+            إدارة المباريات
+        </h1>
+        <p class="page-subtitle">إضافة وإدارة مباريات البطولة وتعيين الفرق لكل مباراة</p>
+    </div>
+    <button class="btn btn-gold" onclick="openAddMatchModal()" id="btnAddMatch">
+        <i class="bi bi-plus-circle-fill"></i>
+        إضافة مباراة
+    </button>
+</div>
+
+<!-- فلاتر الأيام -->
+<div class="content-card mb-4">
+    <div class="distribution-controls">
+        <div class="day-selector">
+            <label class="form-label fw-bold"><i class="bi bi-calendar-event"></i> عرض مباريات:</label>
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="dayFilter" id="dayAll" value="0" checked>
+                <label class="btn btn-outline-gold" for="dayAll">الكل</label>
+                <input type="radio" class="btn-check" name="dayFilter" id="dayFilter1" value="1">
+                <label class="btn btn-outline-gold" for="dayFilter1">اليوم الأول</label>
+                <input type="radio" class="btn-check" name="dayFilter" id="dayFilter2" value="2">
+                <label class="btn btn-outline-gold" for="dayFilter2">اليوم الثاني</label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جدول المباريات -->
+<div class="content-card">
+    <div class="card-header-custom">
+        <h3>
+            <i class="bi bi-list-ul"></i>
+            قائمة المباريات
+        </h3>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-modern" id="matchesTable">
+            <thead>
+                <tr>
+                    <th>الترتيب</th>
+                    <th>اسم المباراة</th>
+                    <th>اليوم</th>
+                    <th>الفترة</th>
+                    <th>التوقيت</th>
+                    <th>عدد الفرق</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="matchesTableBody">
+            </tbody>
+        </table>
+    </div>
+
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-state-inner">
+            <i class="bi bi-trophy" style="font-size: 48px; color: var(--text-muted);"></i>
+            <h4 style="color: var(--text-secondary); margin-top: 16px;">لا توجد مباريات</h4>
+            <p style="color: var(--text-muted); font-size: 13px;">اضغط على "إضافة مباراة" لإنشاء مباراة جديدة</p>
+        </div>
+    </div>
+</div>
+
+<!-- قسم فرق المباراة المحددة -->
+<div class="content-card mt-4" id="matchTeamsSection" style="display: none;">
+    <div class="card-header-custom">
+        <h3>
+            <i class="bi bi-people-fill"></i>
+            <span id="matchTeamsTitle">فرق المباراة</span>
+        </h3>
+        <button class="btn btn-gold btn-sm" onclick="openAssignTeamModal()" id="btnAssignTeam">
+            <i class="bi bi-plus-lg"></i> تعيين فريق
+        </button>
+    </div>
+
+    <!-- الفرق المعينة -->
+    <div class="table-responsive" id="assignedTeamsContainer">
+        <table class="table table-modern" id="assignedTeamsTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الأكاديمية</th>
+                    <th>الفريق</th>
+                    <th>الفئة</th>
+                    <th>إزالة</th>
+                </tr>
+            </thead>
+            <tbody id="assignedTeamsBody">
+            </tbody>
+        </table>
+    </div>
+    <div class="empty-state" id="noTeamsAssigned" style="display: none;">
+        <div class="empty-state-inner">
+            <i class="bi bi-person-plus" style="font-size: 36px; color: var(--text-muted);"></i>
+            <p style="color: var(--text-muted); font-size: 13px; margin-top: 12px;">لا توجد فرق معينة لهذه المباراة</p>
+        </div>
+    </div>
+</div>
+
+<!-- مودال إضافة/تعديل مباراة -->
+<div class="modal fade" id="matchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-custom">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-trophy-fill" style="color: var(--accent-dark); margin-left: 8px;"></i>
+                    <span id="matchModalTitle">إضافة مباراة جديدة</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editMatchId" value="">
+
+                <div class="mb-3">
+                    <label for="inputMatchName" class="form-label">اسم المباراة</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-trophy"></i></span>
+                        <input type="text" class="form-control" id="inputMatchName" placeholder="مثال: مباراة 1">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label for="inputMatchDay" class="form-label">اليوم</label>
+                        <select class="form-select" id="inputMatchDay">
+                            <option value="1">اليوم الأول</option>
+                            <option value="2">اليوم الثاني</option>
+                        </select>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label for="inputMatchPeriod" class="form-label">الفترة</label>
+                        <select class="form-select" id="inputMatchPeriod">
+                            <option value="morning">صباحاً</option>
+                            <option value="evening">مساءً</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label for="inputMatchOrder" class="form-label">الترتيب</label>
+                        <input type="number" class="form-control" id="inputMatchOrder" min="1" value="1">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label for="inputMatchTime" class="form-label">التوقيت (اختياري)</label>
+                        <input type="text" class="form-control" id="inputMatchTime" placeholder="مثال: 09:00">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-gold" onclick="saveMatch()">
+                    <i class="bi bi-check-lg"></i> حفظ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال تعيين فريق -->
+<div class="modal fade" id="assignTeamModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-custom">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus-fill" style="color: var(--accent-dark); margin-left: 8px;"></i>
+                    تعيين فريق للمباراة
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="selectTeam" class="form-label">اختر الفريق</label>
+                    <select class="form-select" id="selectTeam">
+                        <option value="">-- اختر فريقاً --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-gold" onclick="assignTeam()">
+                    <i class="bi bi-check-lg"></i> تعيين
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال تأكيد الحذف -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content modal-custom">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle-fill" style="color: var(--danger); margin-left: 8px;"></i>
+                    تأكيد الحذف
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف المباراة <strong id="deleteMatchName"></strong>؟</p>
+                <p class="text-muted" style="font-size: 12px;">سيتم إزالة جميع تعيينات الفرق لهذه المباراة.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="confirmDelete()">
+                    <i class="bi bi-trash"></i> حذف
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let matchesData = [];
+    let selectedMatchId = null;
+    let deleteMatchId = null;
+    let allTeams = [];
+
+    // ────── تحميل المباريات ──────
+    async function loadMatches() {
+        const dayFilter = document.querySelector('input[name="dayFilter"]:checked').value;
+        const url = dayFilter === '0' ? '/api/matches' : `/api/matches?day=${dayFilter}`;
+        const { ok, data } = await apiRequest(url);
+        if (ok) {
+            matchesData = data;
+            renderMatchesTable();
+        }
+    }
+
+    // ────── فلتر اليوم ──────
+    document.querySelectorAll('input[name="dayFilter"]').forEach(r => {
+        r.addEventListener('change', () => loadMatches());
+    });
+
+    // ────── عرض الجدول ──────
+    function renderMatchesTable() {
+        const tbody = document.getElementById('matchesTableBody');
+        const empty = document.getElementById('emptyState');
+
+        if (matchesData.length === 0) {
+            tbody.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+        empty.style.display = 'none';
+
+        tbody.innerHTML = matchesData.map(m => `
+            <tr class="${selectedMatchId === m.id ? 'table-row-selected' : ''}" style="cursor: pointer;"
+                onclick="selectMatch(${m.id})">
+                <td class="text-center"><strong>${m.match_order}</strong></td>
+                <td>
+                    <i class="bi bi-trophy-fill" style="color: var(--accent-dark); margin-left: 6px;"></i>
+                    <strong>${m.name}</strong>
+                </td>
+                <td><span class="badge bg-info">اليوم ${m.day}</span></td>
+                <td>
+                    <span class="badge ${m.period === 'morning' ? 'bg-match-morning' : 'bg-match-evening'}">
+                        <i class="bi bi-${m.period === 'morning' ? 'sunrise' : 'moon-stars'}"></i>
+                        ${m.period_label}
+                    </span>
+                </td>
+                <td><code style="color: var(--accent-dark);">${m.time_label || '—'}</code></td>
+                <td><span class="badge bg-secondary">${m.teams_count} فريق</span></td>
+                <td>
+                    <div class="action-buttons" onclick="event.stopPropagation()">
+                        <button class="btn btn-sm btn-outline-warning" onclick="openEditMatchModal(${m.id})" title="تعديل">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="openDeleteModal(${m.id}, '${m.name}')" title="حذف">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // ────── اختيار مباراة لعرض فرقها ──────
+    async function selectMatch(id) {
+        selectedMatchId = id;
+        renderMatchesTable();
+
+        const match = matchesData.find(m => m.id === id);
+        if (!match) return;
+
+        document.getElementById('matchTeamsSection').style.display = 'block';
+        document.getElementById('matchTeamsTitle').textContent = `فرق: ${match.name}`;
+
+        renderAssignedTeams(match.teams);
+
+        // تحميل كل الفرق للـ dropdown
+        const { ok, data } = await apiRequest('/api/academies');
+        if (ok) {
+            allTeams = [];
+            data.forEach(academy => {
+                // نحتاج بيانات الفرق من كل أكاديمية
+            });
+        }
+    }
+
+    function renderAssignedTeams(teams) {
+        const tbody = document.getElementById('assignedTeamsBody');
+        const noTeams = document.getElementById('noTeamsAssigned');
+
+        if (!teams || teams.length === 0) {
+            tbody.innerHTML = '';
+            noTeams.style.display = 'block';
+            document.getElementById('assignedTeamsContainer').style.display = 'none';
+            return;
+        }
+
+        noTeams.style.display = 'none';
+        document.getElementById('assignedTeamsContainer').style.display = 'block';
+
+        tbody.innerHTML = teams.map((t, idx) => `
+            <tr>
+                <td>${idx + 1}</td>
+                <td><strong>${t.academy_name}</strong></td>
+                <td>${t.gender}</td>
+                <td><span class="badge bg-secondary">${t.category_label}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeTeamFromMatch(${t.id})">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // ────── تحميل الفرق المتاحة في dropdown ──────
+    async function loadAvailableTeams() {
+        const select = document.getElementById('selectTeam');
+        select.innerHTML = '<option value="">-- اختر فريقاً --</option>';
+
+        const { ok, data } = await apiRequest('/api/academies');
+        if (!ok) return;
+
+        // جلب الفرق لكل أكاديمية
+        for (const academy of data) {
+            // نحتاج endpoint للفرق — نستخدم تفاصيل الأكاديمية
+        }
+
+        // بديل: جلب كل الفرق مباشرة
+        const res = await apiRequest('/api/all-teams');
+        if (res.ok) {
+            const match = matchesData.find(m => m.id === selectedMatchId);
+            const assignedIds = match ? match.teams.map(t => t.id) : [];
+
+            res.data.forEach(t => {
+                if (!assignedIds.includes(t.id)) {
+                    const option = document.createElement('option');
+                    option.value = t.id;
+                    option.textContent = `${t.academy_name} — ${t.gender} ${t.category_label}`;
+                    select.appendChild(option);
+                }
+            });
+        }
+    }
+
+    // ────── مودال الإضافة ──────
+    function openAddMatchModal() {
+        document.getElementById('editMatchId').value = '';
+        document.getElementById('matchModalTitle').textContent = 'إضافة مباراة جديدة';
+        document.getElementById('inputMatchName').value = '';
+        document.getElementById('inputMatchDay').value = '1';
+        document.getElementById('inputMatchPeriod').value = 'morning';
+        document.getElementById('inputMatchOrder').value = matchesData.length + 1;
+        document.getElementById('inputMatchTime').value = '';
+        new bootstrap.Modal(document.getElementById('matchModal')).show();
+    }
+
+    // ────── مودال التعديل ──────
+    function openEditMatchModal(id) {
+        const match = matchesData.find(m => m.id === id);
+        if (!match) return;
+
+        document.getElementById('editMatchId').value = id;
+        document.getElementById('matchModalTitle').textContent = `تعديل: ${match.name}`;
+        document.getElementById('inputMatchName').value = match.name;
+        document.getElementById('inputMatchDay').value = match.day;
+        document.getElementById('inputMatchPeriod').value = match.period;
+        document.getElementById('inputMatchOrder').value = match.match_order;
+        document.getElementById('inputMatchTime').value = match.time_label;
+        new bootstrap.Modal(document.getElementById('matchModal')).show();
+    }
+
+    // ────── حفظ المباراة ──────
+    async function saveMatch() {
+        const editId = document.getElementById('editMatchId').value;
+        const name = document.getElementById('inputMatchName').value.trim();
+        const day = parseInt(document.getElementById('inputMatchDay').value);
+        const period = document.getElementById('inputMatchPeriod').value;
+        const match_order = parseInt(document.getElementById('inputMatchOrder').value);
+        const time_label = document.getElementById('inputMatchTime').value.trim();
+
+        if (!name) { showToast('اسم المباراة مطلوب', 'error'); return; }
+
+        const payload = { name, day, period, match_order, time_label };
+
+        if (!editId) {
+            const { ok, data } = await apiRequest('/api/matches', 'POST', payload);
+            if (ok) {
+                showToast(data.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('matchModal')).hide();
+                loadMatches();
+            } else { showToast(data.error, 'error'); }
+        } else {
+            const { ok, data } = await apiRequest(`/api/matches/${editId}`, 'PUT', payload);
+            if (ok) {
+                showToast(data.message, 'success');
+                bootstrap.Modal.getInstance(document.getElementById('matchModal')).hide();
+                loadMatches();
+            } else { showToast(data.error, 'error'); }
+        }
+    }
+
+    // ────── حذف مباراة ──────
+    function openDeleteModal(id, name) {
+        deleteMatchId = id;
+        document.getElementById('deleteMatchName').textContent = name;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+
+    async function confirmDelete() {
+        if (!deleteMatchId) return;
+        const { ok, data } = await apiRequest(`/api/matches/${deleteMatchId}`, 'DELETE');
+        if (ok) {
+            showToast(data.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+            if (selectedMatchId === deleteMatchId) {
+                selectedMatchId = null;
+                document.getElementById('matchTeamsSection').style.display = 'none';
+            }
+            loadMatches();
+        } else { showToast(data.error, 'error'); }
+        deleteMatchId = null;
+    }
+
+    // ────── تعيين فريق ──────
+    function openAssignTeamModal() {
+        loadAvailableTeams();
+        new bootstrap.Modal(document.getElementById('assignTeamModal')).show();
+    }
+
+    async function assignTeam() {
+        const teamId = document.getElementById('selectTeam').value;
+        if (!teamId || !selectedMatchId) {
+            showToast('يرجى اختيار فريق', 'error');
+            return;
+        }
+
+        const { ok, data } = await apiRequest(`/api/matches/${selectedMatchId}/teams`, 'POST', { team_id: parseInt(teamId) });
+        if (ok) {
+            showToast(data.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('assignTeamModal')).hide();
+            loadMatches().then(() => {
+                const match = matchesData.find(m => m.id === selectedMatchId);
+                if (match) renderAssignedTeams(match.teams);
+            });
+        } else { showToast(data.error, 'error'); }
+    }
+
+    // ────── إزالة فريق من مباراة ──────
+    async function removeTeamFromMatch(teamId) {
+        if (!selectedMatchId) return;
+        const { ok, data } = await apiRequest(`/api/matches/${selectedMatchId}/teams/${teamId}`, 'DELETE');
+        if (ok) {
+            showToast(data.message, 'success');
+            loadMatches().then(() => {
+                const match = matchesData.find(m => m.id === selectedMatchId);
+                if (match) renderAssignedTeams(match.teams);
+            });
+        } else { showToast(data.error, 'error'); }
+    }
+
+    // ────── تحميل أولي ──────
+    document.addEventListener('DOMContentLoaded', loadMatches);
+</script>
+{% endblock %}
